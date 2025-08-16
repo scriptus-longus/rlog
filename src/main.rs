@@ -72,7 +72,19 @@ fn get_goals(ast: &parser::Node) -> Vec<Vec<GoalAtom>> {
       return  con_neg(&get_goals(x));
     },
   }
+}
 
+fn print_solution(goals: &Vec<Vec<GoalAtom>>) {
+  for goal in goals {
+    for atom in goal {
+     match atom {
+      GoalAtom{name: x, neg: false} => print!("{}: {} ", x, "⊤"),
+      GoalAtom{name: x, neg: true} => print!("{}: {} ", x, "⊥"),
+     }
+    }
+
+    println!("");
+  }
 }
 
 
@@ -82,11 +94,14 @@ fn main() -> Result<()>{
   let mut lex = lexer::Lexer::new("");
   let mut p = parser::Parser::new();
 
+
   loop {
     let readline = rl.readline("- ");
 
     match readline {
       Ok(l) => {
+        rl.add_history_entry(l.as_str())?;
+
         if l == "exit" {
           println!("Exiting..."); 
           break;
@@ -102,7 +117,7 @@ fn main() -> Result<()>{
             _ => {
               for ast in p.buffer.drain(..) {
                 let goals = get_goals(&ast);
-                println!("{:?}", goals);
+                print_solution(&goals);
               }
 
               println!("Buffer: {:?}", p.buffer);

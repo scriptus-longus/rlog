@@ -68,7 +68,6 @@ impl Parser {
     let mut lh = self.parse_fact(lex)?;
 
     while let Some(c) = lex.peek() {
-      println!("C is {:?}", c);
       match c {
         lexer::Tokens::Op('∨') => {
           lex.pop();
