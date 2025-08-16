@@ -79,26 +79,36 @@ fn get_goals(ast: &parser::Node) -> Vec<Vec<GoalAtom>> {
 fn main() -> Result<()>{
   let mut rl = DefaultEditor::new()?;
 
+  let mut lex = lexer::Lexer::new("");
+  let mut p = parser::Parser::new();
+
   loop {
     let readline = rl.readline("- ");
+
     match readline {
       Ok(l) => {
         if l == "exit" {
           println!("Exiting..."); 
           break;
         } else{
-          let mut lex = lexer::Lexer::new(&l);
+          lex.consume(&l);
 
-          println!("Tokens: {:?}", lex.buffer);
+          match p.parse(&mut lex) {
+            Err(ref x) => {
+              println!("{:?}", x);
+              p.buffer.clear();
+              lex.buffer.clear();
+            },
+            _ => {
+              for ast in p.buffer.drain(..) {
+                let goals = get_goals(&ast);
+                println!("{:?}", goals);
+              }
 
-          let mut parser = parser::Parser::new(lex);
+              println!("Buffer: {:?}", p.buffer);
+            },
+          };
 
-
-          let ast = parser.ast.unwrap();
-          println!("AST: {:?}", ast.to_string());
-
-          let goals = get_goals(&ast);
-          println!("{:?}", goals);
         }
       },
       Err(ReadlineError::Interrupted) => {
