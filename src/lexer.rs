@@ -1,10 +1,13 @@
 #[derive(Debug, PartialEq)]
 pub enum Tokens {
-  Variable(char),
+  Name(String),
   Bopen,
   Bclose,
   Op(char),
   Neg,
+  Arrow,
+  Delim,
+  EOL,
   EOF,
 }
 
@@ -14,55 +17,50 @@ pub struct Lexer {
 }
 
 impl Lexer {
-  pub fn new(text: &str) -> Self {  // TODO: check pass by reference
+  pub fn new(text: String) -> Self {  // TODO: check pass by reference
     let mut lex = Lexer {buffer : vec![]};
     lex.consume(text);
+
     lex
-    /*text.retain(|c| !c.is_whitespace() && c != ' ');
-    println!("{}", text);
-  
-    let mut buf = Vec::new();
-
-    for c in text.chars() {
-      match c {
-        '(' => buf.push(Tokens::Bopen),
-        ')' => buf.push(Tokens::Bclose),
-        '∧' => buf.push(Tokens::Op('∧')),
-        '∨' => buf.push(Tokens::Op('∨')),
-        '¬' => buf.push(Tokens::Neg),
-         _ => buf.push(Tokens::Variable(c)),
-      }
-    }
-
-    //buf.push(Tokens::EOF); 
-    buf.reverse();
-
-    Lexer {buffer: buf}*/
   }
 
+  fn get_var(text: &mut String) -> String {
+    let idx = text.find(|c: char| !(c.is_lowercase() || c.is_lowercase()) ).unwrap_or(text.len());
+    let name: String = text.drain(..idx).collect();
 
-  pub fn consume(&mut self, text: &str) {
-    let byte_text: Vec<char>  = text.chars().filter(|x| !x.is_whitespace()).collect(); //.map(|x| x as u8).collect();
+    name
+  }
 
-    let mut idx = 0;
-    while idx < byte_text.len() {
-      //let c = byte_text.pop_front();
-      let c = byte_text[idx]; 
+  pub fn consume(&mut self, mut text: String) {
+    //let mut text: String = text.chars().filter(|&x| x != '\t' && x != '\n').collect();
+
+    while !text.is_empty() {
+      let c = text.remove(0);
 
       match c {
         '(' => self.buffer.insert(0, Tokens::Bopen),
-        ')' => self.buffer.insert(0,Tokens::Bclose),
-        '∧' => self.buffer.insert(0,Tokens::Op('∧')),
-        '∨' => self.buffer.insert(0,Tokens::Op('∨')),
-        '¬' => self.buffer.insert(0,Tokens::Neg),
-        '.' => self.buffer.insert(0,Tokens::EOF),
-        _ => if !c.is_whitespace() {
-            self.buffer.insert(0, Tokens::Variable(c));
+        ')' => self.buffer.insert(0, Tokens::Bclose),
+        '∧' => self.buffer.insert(0, Tokens::Op('∧')),
+        '∨' => self.buffer.insert(0, Tokens::Op('∨')),
+        '¬' => self.buffer.insert(0, Tokens::Neg),
+        '.' => self.buffer.insert(0, Tokens::EOL),
+        ',' => self.buffer.insert(0, Tokens::Delim),
+        ':' => self.buffer.insert(0, Tokens::Arrow),
+        _ => {
+          if !c.is_whitespace() {
+            if c.is_lowercase() || c.is_uppercase() {
+              let name = format!("{}{}", c, Self::get_var(&mut text));
+
+              self.buffer.insert(0, Tokens::Name(name));
+            }
+            //self.buffer.insert(0, Tokens::Variable(c));
+          }
         },
       };
-      
-      idx += 1;
+    
+      //text.remove(0);
     }
+    println!("BUFFER: {:?}", self.buffer);
   }
 
   pub fn pop(&mut self) -> Option<Tokens> {

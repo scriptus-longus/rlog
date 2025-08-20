@@ -1,0 +1,14 @@
+---------------------------
+Simple Prolog like grammar
+---------------------------
+
+<start> ::= <cmd> | <cmd> <start>
+
+<cmd> ::= <fact> "." | <fact> ":-" <Rule> "."
+<fact> ::= <name>(<atoms>) | <atom>.
+
+<atoms> ::=  <name> "," <Atoms> | <name>
+
+<rule> ::= <Conj> ∨ <conj> | <Conj>
+<conj> ::= <term> ∧ <term> | <term>
+<term> ::= <fact> | ¬ <term> | ( <rule> )

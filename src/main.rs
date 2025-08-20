@@ -1,15 +1,15 @@
 use rustyline::{DefaultEditor, Result};
 use rustyline::error::ReadlineError;
-use std::collections::HashSet;
 use itertools::Itertools;
 
+// other
 mod lexer;
 mod parser;
+mod interpreter;
 
-#[derive(Debug)] 
-#[derive(Clone)]
+#[derive(Debug, Clone)] 
 pub struct GoalAtom { 
-  name: char,
+  name: String,
   neg: bool,
 }
 
@@ -37,7 +37,7 @@ fn con_neg(goals: &[Vec<GoalAtom>]) -> Vec<Vec<GoalAtom>> {
       .flat_map(|v| {
         tail.iter().map(move |t| {
           let mut new_tail = t.clone();
-          new_tail.push(GoalAtom {name: v.name, neg: !v.neg} );
+          new_tail.push(GoalAtom {name: v.name.clone(), neg: !v.neg} );
           new_tail
         })
       })
@@ -62,7 +62,7 @@ fn get_goals(ast: &parser::Node) -> Vec<Vec<GoalAtom>> {
       return lh_goals;
     },
 
-    parser::Node::Var(x) => {
+    parser::Node::Atom(x) => {
       return  vec![vec![
                 GoalAtom {name: x.clone(), neg: false} 
               ]];
@@ -71,6 +71,7 @@ fn get_goals(ast: &parser::Node) -> Vec<Vec<GoalAtom>> {
     parser::Node::Neg(x) => {
       return  con_neg(&get_goals(x));
     },
+    _ => {panic!("TODO: fix this")}
   }
 }
 
@@ -87,12 +88,27 @@ fn print_solution(goals: &Vec<Vec<GoalAtom>>) {
   }
 }
 
+fn process(log_env: &mut interpreter::Env, ast: &parser::Node) {
+  match ast {
+    parser::Node::Fact(x, y) => {
+      match log_env.add_fact(ast) {
+        Err(x) => println!("{}", x),
+        _ => log_env.print_all_facts(),
+      };
+    }
+    _ => {
+      println!("Not Implemented"); 
+    },
+  };
+}
+
 
 fn main() -> Result<()>{
   let mut rl = DefaultEditor::new()?;
 
-  let mut lex = lexer::Lexer::new("");
+  let mut lex = lexer::Lexer::new(String::from(""));
   let mut p = parser::Parser::new();
+  let mut log_env = interpreter::Env::new();
 
 
   loop {
@@ -106,7 +122,7 @@ fn main() -> Result<()>{
           println!("Exiting..."); 
           break;
         } else{
-          lex.consume(&l);
+          lex.consume(l);
 
           match p.parse(&mut lex) {
             Err(ref x) => {
@@ -115,12 +131,17 @@ fn main() -> Result<()>{
               lex.buffer.clear();
             },
             _ => {
+              println!("got input!");
+              //p.buffer.clear();
+              //lex.buffer.clear();
               for ast in p.buffer.drain(..) {
-                let goals = get_goals(&ast);
-                print_solution(&goals);
+                //let goals = get_goals(&ast);
+                //print_solution(&goals);
+                //println!("AST: {:?}", ast.to_string());
+                process(&mut log_env, &ast);
               }
 
-              println!("Buffer: {:?}", p.buffer);
+              println!("Buffer: {:?}", log_env);
             },
           };
 
