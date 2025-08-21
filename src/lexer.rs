@@ -4,6 +4,8 @@ pub enum Tokens {
   Bopen,
   Bclose,
   Op(char),
+  Exists,
+  Seperator,
   Neg,
   Arrow,
   Delim,
@@ -45,7 +47,14 @@ impl Lexer {
         '¬' => self.buffer.insert(0, Tokens::Neg),
         '.' => self.buffer.insert(0, Tokens::EOL),
         ',' => self.buffer.insert(0, Tokens::Delim),
-        ':' => self.buffer.insert(0, Tokens::Arrow),
+        '?' => self.buffer.insert(0, Tokens::Exists),
+        ':' => {
+          if text.chars().nth(0).unwrap() == '-' {
+            self.buffer.insert(0, Tokens::Arrow)
+          } else {
+            self.buffer.insert(0, Tokens::Seperator)
+          }
+        },
         _ => {
           if !c.is_whitespace() {
             if c.is_lowercase() || c.is_uppercase() {

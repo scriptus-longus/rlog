@@ -2,6 +2,7 @@ use rustyline::{DefaultEditor, Result};
 use rustyline::error::ReadlineError;
 use itertools::Itertools;
 
+
 // other
 mod lexer;
 mod parser;
@@ -89,17 +90,44 @@ fn print_solution(goals: &Vec<Vec<GoalAtom>>) {
 }
 
 fn process(log_env: &mut interpreter::Env, ast: &parser::Node) {
+  /*match log_env.add_fact(ast) {
+    Err(x) => println!("{}", x),
+    _ => (),
+  };*/
+
+  let res = match ast {
+    parser::Node::Fact(_,_) => log_env.add_fact(ast),
+    parser::Node::Query(_) => log_env.add_query(ast),
+    _ => Err("Not Implemented"),
+  };
+  
+  // TODO: process potential error res
+
+  if !log_env.queries.is_empty() {
+    let query = log_env.queries.pop().unwrap();
+    let sol = log_env.query_fact(&query);
+
+    match sol {
+      Some(ref x) => println!("True for: {:?}", x),
+      _ => println!("Not satisfiable"),
+    }
+  };
+
+
+  /*
   match ast {
-    parser::Node::Fact(x, y) => {
+    parser::Node::Fact(_, _) => {
       match log_env.add_fact(ast) {
         Err(x) => println!("{}", x),
         _ => log_env.print_all_facts(),
       };
+    },
+    parser::Node::Query(_) => {
     }
     _ => {
       println!("Not Implemented"); 
     },
-  };
+  };*/
 }
 
 

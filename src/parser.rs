@@ -7,7 +7,7 @@ Simple Prolog like grammar
 
 <start> ::= <cmd> | <cmd> <start>
 
-<cmd> ::= <fact> "." | <fact> ":-" <Rule> "."
+<cmd> ::= <fact> "." | <fact> ":-" <Rule> "." | ? (<Atoms>) : <fact>.
 <fact> ::= <name>(<atoms>) | <atom>.
 
 <atoms> ::=  <name> "," <Atoms> | <name>
@@ -19,6 +19,7 @@ Simple Prolog like grammar
 
 #[derive(Debug)]
 pub enum Node {
+  Query(Box<Node>),
   Fact(String, Option<Box<Node>>),
   Atoms(Box<Node>, Option<Box<Node>>),
   Rule(Box<Node>, Box<Node>),
@@ -29,16 +30,19 @@ pub enum Node {
   Neg(Box<Node>),
 
   Atom(String),
+  Variable(String)
 }
 
 impl Node {
   pub fn to_string(&self) -> String{
     match self {
       Node::Atom(x) => return x.to_string(),
+      Node::Variable(x) => return x.to_string(),
       Node::And(x, y) => return String::from(format!("(∧ {} {})", x.to_string(), y.to_string())),
       Node::Or(x, y) => return String::from(format!("(∨ {}, {})", x.to_string(), y.to_string())),
       Node::Neg(x) => return String::from(format!("¬{}", x.to_string())),
 
+      Node::Query(x) => return String::from(format!("? {} .", x.to_string())),
       Node::Fact(x, Some(y)) => return String::from(format!("{} ({}).", x, y.to_string())),
       Node::Fact(x, None) => return String::from(format!("{}.", x)),
 
@@ -80,6 +84,14 @@ impl Parser {
   }
 
   pub fn parse_cmd(&self, lex: &mut lexer::Lexer) -> Result<Node, &'static str> {
+    match lex.peek().unwrap() {
+      lexer::Tokens::Exists => {
+        lex.pop(); 
+        return self.parse_query(lex); 
+      },
+      _ => (),
+    };
+
     let fact  = self.parse_fact(lex)?;
 
     match lex.peek().unwrap() {
@@ -91,6 +103,15 @@ impl Parser {
       },
       lexer::Tokens::EOL => Ok(fact),
       _ => Err("Syntax Error: not a valid command"),
+    }
+  }
+
+  pub fn parse_query(&self, lex: &mut lexer::Lexer) -> Result<Node, &'static str> {
+    let fact = self.parse_fact(lex)?;
+
+    match lex.peek().unwrap() {
+      lexer::Tokens::EOL => Ok(Node::Query(Box::new(fact))),
+      _ => Err("Syntax Error: Expected EOL"),
     }
   }
 
