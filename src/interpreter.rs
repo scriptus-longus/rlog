@@ -59,7 +59,6 @@ pub struct Env {
 
 impl Env {
   pub fn new() -> Self {
-    //Env {atoms: vec![Atom("⊤")], facts: vec![]}
     Env {facts: HashMap::new(), queries: vec![]}
   }
   
@@ -75,7 +74,6 @@ impl Env {
         parser::Node::Atoms(x, y) => (x, y),
         _ => return None,
       };
-      //let parser::Node::Atoms(h, t) = &**x;
 
       match &**h {
         parser::Node::Atom(name) => args.push(Name::Atom(name.clone())),
@@ -85,21 +83,6 @@ impl Env {
 
       arg_head = t;
     }
-
-    /*while let Some(x) = arg_head {
-      match &**x {
-        parser::Node::Atoms(h, t) => {
-          match &**h {
-            parser::Node::Atom(name) => {
-              args.push(Name::Atom(name.clone()));
-              arg_head = t;
-            },
-            _ => return None,
-          };
-        },
-        _ => return None,
-      }
-    };*/
 
     Some(Fact {len: args.len(), universe: name, args: args})
   }
@@ -122,53 +105,13 @@ impl Env {
   pub fn add_fact(&mut self, ast: &parser::Node) -> Result<(), &'static str> {
     // get name
     let fact = self.unpack_fact(ast).unwrap();
-    /*
-    let mut query = false;
-
-    let (name, mut args) = match ast {
-      parser::Node::Fact(name, args) => (name.clone(), args),
-      parser::Node::Query(x) => {
-        query = true;
-
-        match &**x {
-          parser::Node::Fact(name, args) => (name.clone(), args),
-          _ => return Err("Error: could not unpack query"),
-        }
-      },
-      _ => return Err("Error: Could not add fact"),
-    };
-
-    // unpack facts
-    let mut arg_vec: Vec<Name> = vec![];
-
-    while let Some(x) = args {
-      match &**x {
-        parser::Node::Atoms(head, tail) => {
-          match &**head {
-            parser::Node::Atom(name) => {
-              arg_vec.push(Name::Atom(name.clone()));
-              args = tail;
-            },
-            _ => return Err("Not a valid name for argument"),
-          };
-        },
-        _ => return Err("Undefined Token unpacking arguments"),
-      }
-    }*/
 
     // add
     match self.facts.get_mut(&fact.universe) {
       Some(ref mut x) => {
-        /*if x.len != arg_vec.len() {
-          return Err("Not the same number of arguments");
-        } 
-          
-          x.args.push(arg_vec);*/
-        //x.add(fact)?;
         x.push(fact)
       },
       None => {
-        //self.facts.insert(name, FactArgs {len: arg_vec.len(), args: vec![arg_vec]}); 
         self.facts.insert(fact.universe.clone(), vec![fact]);
       },
     };
@@ -183,19 +126,9 @@ impl Env {
     println!("queries: {:?}", self.queries);
   }
 
-  /*pub fn pop_query(&mut self) -> Option<Query> {
-    self.queries.pop()
-  }*/
-
-  // query a simple fact
   pub fn query_fact(&self, query: &Fact) -> Option<&Fact> {
     let universe = self.facts.get(&query.universe)?;
     universe.iter().filter(|x| x.matches(query)).next()
 
-    //if universe.len != query.args.len() {
-    //  return None;
-    //}
-
-    //universe.args.iter().filter(|&x| x == &query.args).next()
   }
 }
