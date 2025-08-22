@@ -14,12 +14,13 @@ pub enum Name {
 pub struct Fact {
   len: usize,
   universe: String,
+  vars: Vec<Name>,
   args: Vec<Name>,
 }
 
 impl Fact {
   pub fn new(name: String, args: Vec<Name>) -> Self{
-    Fact {len: args.len(), universe: name, args: args}
+    Fact {len: args.len(), universe: name, vars: vec![], args: args}
   }
 
   pub fn matches(&self, other: &Fact) -> bool {
@@ -69,6 +70,8 @@ impl Env {
     };
 
     let mut args: Vec<Name> = vec![];
+    let mut vars: Vec<Name> = vec![];
+
     while let Some(x) = arg_head {
       let (h, t) = match &**x {
         parser::Node::Atoms(x, y) => (x, y),
@@ -77,14 +80,20 @@ impl Env {
 
       match &**h {
         parser::Node::Atom(name) => args.push(Name::Atom(name.clone())),
-        parser::Node::Variable(name) => args.push(Name::Variable(name.clone())),
+        parser::Node::Variable(name) => {
+          args.push(Name::Variable(name.clone()));
+          vars.push(Name::Variable(name.clone()));
+        },
         _ => return None,
       };
 
       arg_head = t;
     }
 
-    Some(Fact {len: args.len(), universe: name, args: args})
+    Some(Fact {len: args.len(), 
+               universe: name, 
+               vars: vars, 
+               args: args})
   }
 
 
@@ -106,6 +115,10 @@ impl Env {
     // get name
     let fact = self.unpack_fact(ast).unwrap();
 
+    if !fact.vars.is_empty() {
+      return Err("Fact does not accept variables. (Reminder: Atoms must start with small letters)");
+    };
+
     // add
     match self.facts.get_mut(&fact.universe) {
       Some(ref mut x) => {
@@ -115,6 +128,7 @@ impl Env {
         self.facts.insert(fact.universe.clone(), vec![fact]);
       },
     };
+
     Ok(())
   }
   

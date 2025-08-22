@@ -145,6 +145,9 @@ impl Parser {
       lexer::Tokens::Name(atom) => {
         Node::Atom(atom)
       },
+      lexer::Tokens::Variable(atom) => {
+        Node::Variable(atom)
+      },
       _ => return Err("Syntax Error: Expected to find atom"),
     };
 

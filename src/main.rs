@@ -90,11 +90,6 @@ fn print_solution(goals: &Vec<Vec<GoalAtom>>) {
 }
 
 fn process(log_env: &mut interpreter::Env, ast: &parser::Node) {
-  /*match log_env.add_fact(ast) {
-    Err(x) => println!("{}", x),
-    _ => (),
-  };*/
-
   let res = match ast {
     parser::Node::Fact(_,_) => log_env.add_fact(ast),
     parser::Node::Query(_) => log_env.add_query(ast),
@@ -112,22 +107,6 @@ fn process(log_env: &mut interpreter::Env, ast: &parser::Node) {
       _ => println!("Not satisfiable"),
     }
   };
-
-
-  /*
-  match ast {
-    parser::Node::Fact(_, _) => {
-      match log_env.add_fact(ast) {
-        Err(x) => println!("{}", x),
-        _ => log_env.print_all_facts(),
-      };
-    },
-    parser::Node::Query(_) => {
-    }
-    _ => {
-      println!("Not Implemented"); 
-    },
-  };*/
 }
 
 
@@ -159,7 +138,6 @@ fn main() -> Result<()>{
               lex.buffer.clear();
             },
             _ => {
-              println!("got input!");
               //p.buffer.clear();
               //lex.buffer.clear();
               for ast in p.buffer.drain(..) {
@@ -169,7 +147,6 @@ fn main() -> Result<()>{
                 process(&mut log_env, &ast);
               }
 
-              println!("Buffer: {:?}", log_env);
             },
           };
 
